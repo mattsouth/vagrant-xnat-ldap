@@ -19,11 +19,38 @@ sudo apt-get -y install postgresql
 sudo apt-get -y install openjdk-7-jdk
 sudo apt-get -y install tomcat7
 
+# install ldap, note admin user has no password and domain is 'nodomain'
+# see http://www.linuxforums.org/forum/ubuntu-linux/191660-script-install-slapd-admin-ldap-password.html
+installnoninteractive(){
+  sudo bash -c "DEBIAN_FRONTEND=noninteractive aptitude install -q -y $*"
+}
+installnoninteractive slapd ldap-utils
+# set ldap admin password
+# see https://github.com/gschueler/vagrant-rundeck-ldap
+LDAP_PASSWORD=admin
+LDAP_OLCDB_NUMBER=1
+LDAP_ROOTPW_COMMAND=replace
+SUFFIX=dc=nodomain
+MANAGER=dc=Manager
+SLAPPASS=`slappasswd -s $LDAP_PASSWORD`
+TMP_MGR_DIFF_FILE=`mktemp -t manager_ldiff.$$.XXXXXXXXXX.ldif`
+sed -e "s|\${MANAGER}|$MANAGER|"  -e "s|\${SUFFIX}|$SUFFIX|" -e "s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|" -e "s|\${SLAPPASS}|$SLAPPASS|" -e "s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|" /vagrant/manager.ldif >> $TMP_MGR_DIFF_FILE
+ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_MGR_DIFF_FILE
+# load default ldap user
+ldapadd -c -x -H ldap://localhost:389 -D "$MANAGER,$SUFFIX" -w $LDAP_PASSWORD -f /vagrant/users.ldif
+# boost the ldap logging level
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
+
 # download xnat
 cd /opt
-sudo curl -O ftp://ftp.nrg.wustl.edu/pub/xnat/${XNAT}.tar.gz
+if [ -f /vagrant/xnat-1.6.4.tar.gz ]; then
+    sudo cp /vagrant/xnat-1.6.4.tar.gz .
+else
+    sudo curl -O ftp://ftp.nrg.wustl.edu/pub/xnat/${XNAT}.tar.gz
+fi
 sudo tar -zxvf ${XNAT}.tar.gz
 sudo cp /vagrant/build.properties /opt/${XNAT}
+sudo cp /vagrant/services.properties /opt/${XNAT}/plugin-resources/conf/services.properties
 
 # database settings
 sudo -u postgres createuser -U postgres -S -D -R xnat01

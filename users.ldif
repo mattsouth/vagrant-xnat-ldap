@@ -1,0 +1,12 @@
+dn: ou=People,dc=nodomain
+objectClass: organizationalUnit
+ou: People
+
+dn: uid=john,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+uid: john
+sn: Doe
+givenName: John
+cn: John Doe
+displayName: Doe, John
+userPassword: johnldap

@@ -18,7 +18,7 @@ vagrant up
 
 Once the Vagrant box is up and running XNAT is available at http://192.168.50.50:8080/xnat
 
-The ldap directory is available read-only on http://192.168.50.50:389
+The ldap directory is available read-only on ldap://192.168.50.50:389
 To write to the directory you will need to logon with the User DN 'dc=Manager,dc=nodomain' and password 'admin'
 
 ### Change IP address of Vagrant box:

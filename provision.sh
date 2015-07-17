@@ -41,6 +41,17 @@ ldapadd -c -x -H ldap://localhost:389 -D "$MANAGER,$SUFFIX" -w $LDAP_PASSWORD -f
 # boost the ldap logging level
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
 
+# extract prophylactic .maven repository
+cd /home/tomcat7
+if [ -f /vagrant/xnat-maven.zip ]; then
+    sudo cp /vagrant/xnat-maven.zip .
+else
+    sudo curl -O ftp://ftp.nrg.wustl.edu/pub/xnat/xnat-maven.zip
+fi
+sudo apt-get install -y unzip
+sudo chown tomcat7:tomcat7 /home/tomcat7/xnat-maven.zip
+sudo su tomcat7 -c "unzip xnat-maven.zip"
+
 # download xnat
 cd /opt
 if [ -f /vagrant/xnat-1.6.4.tar.gz ]; then

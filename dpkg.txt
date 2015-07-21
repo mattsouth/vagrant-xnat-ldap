@@ -1,0 +1,12 @@
+slapd	shared/organization	string	Test Organisation
+slapd	slapd/purge_database	boolean	false
+slapd	slapd/move_old_database	boolean	true
+slapd	slapd/allow_ldap_v2	boolean	false
+slapd	slapd/invalid_config	boolean	true
+slapd	slapd/dump_database	select	when needed
+slapd	slapd/backend	select	HDB
+slapd	slapd/no_configuration	boolean	false
+slapd	slapd/password1	password adminpassword
+slapd	slapd/password2	password adminpassword
+slapd	slapd/domain	string	test.net
+slapd	slapd/dump_database_destdir	string	/var/backups/slapd-VERSION

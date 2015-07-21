@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo -e '192.168.50.50\txnat.test.net' | sudo tee --append /etc/hosts
 XNAT=xnat-1.6.4
 
 # create tomcat7 user
@@ -19,29 +19,37 @@ sudo apt-get -y install postgresql
 sudo apt-get -y install openjdk-7-jdk
 sudo apt-get -y install tomcat7
 
-# install ldap, note admin user has no password and domain is 'nodomain'
-# see http://www.linuxforums.org/forum/ubuntu-linux/191660-script-install-slapd-admin-ldap-password.html
-installnoninteractive(){
-  sudo bash -c "DEBIAN_FRONTEND=noninteractive aptitude install -q -y $*"
-}
-installnoninteractive slapd ldap-utils
-# set ldap admin password
-# see https://github.com/gschueler/vagrant-rundeck-ldap
-LDAP_PASSWORD=admin
-LDAP_OLCDB_NUMBER=1
-LDAP_ROOTPW_COMMAND=replace
-SUFFIX=dc=nodomain
-MANAGER=dc=Manager
-SLAPPASS=`slappasswd -s $LDAP_PASSWORD`
-TMP_MGR_DIFF_FILE=`mktemp -t manager_ldiff.$$.XXXXXXXXXX.ldif`
-sed -e "s|\${MANAGER}|$MANAGER|"  -e "s|\${SUFFIX}|$SUFFIX|" -e "s|\${LDAP_OLCDB_NUMBER}|$LDAP_OLCDB_NUMBER|" -e "s|\${SLAPPASS}|$SLAPPASS|" -e "s|\${LDAP_ROOTPW_COMMAND}|$LDAP_ROOTPW_COMMAND|" /vagrant/manager.ldif >> $TMP_MGR_DIFF_FILE
-ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_MGR_DIFF_FILE
+# setup keys
+sudo apt-get -y install gnutls-bin ssl-cert
+sudo sh -c "certtool --generate-privkey > /etc/ssl/private/cakey.pem"
+echo -e 'cn = Dementias Platform UK\nca\ncert_signing_key' | sudo tee /etc/ssl/ca.info
+sudo certtool --generate-self-signed --load-privkey /etc/ssl/private/cakey.pem --template /etc/ssl/ca.info --outfile /etc/ssl/certs/cacert.pem
+sudo certtool --generate-privkey --bits 1024 --outfile /etc/ssl/private/test_slapd_key.pem
+echo -e 'organization = Test Organisation\ncn = xnat.test.net\ntls_www_server\nencryption_key\nsigning_key\nexpiration_days = 7' | sudo tee /etc/ssl/test.info
+sudo certtool --generate-certificate --load-privkey /etc/ssl/private/test_slapd_key.pem --load-ca-certificate /etc/ssl/certs/cacert.pem --load-ca-privkey /etc/ssl/private/cakey.pem --template /etc/ssl/test.info --outfile /etc/ssl/certs/test_slapd_cert.pem
+
+# install ldap
+sudo debconf-set-selections /vagrant/dpkg.txt
+sudo apt-get -y install slapd ldap-utils
+sudo adduser openldap ssl-cert
+sudo chgrp ssl-cert /etc/ssl/private/test_slapd_key.pem
+sudo chmod g+r /etc/ssl/private/test_slapd_key.pem
+sudo chmod o-r /etc/ssl/private/test_slapd_key.pem
+
 # load default ldap user
-ldapadd -c -x -H ldap://localhost:389 -D "$MANAGER,$SUFFIX" -w $LDAP_PASSWORD -f /vagrant/users.ldif
+ldapadd -c -x -H ldap://localhost:389 -D "cn=admin,dc=test,dc=net" -w adminpassword -f /vagrant/users.ldif
 # boost the ldap logging level
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
+# configure tls encryption
+sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f /vagrant/certinfo.ldif
+sudo sed -i -e 's/ldap:\/\/\//ldap:\/\/xnat.test.net/g' /etc/default/slapd
+sudo service slapd restart
+# remove anonymous access
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/removeanon.ldif
 
 # extract prophylactic .maven repository
+# see https://groups.google.com/forum/#!topic/xnat_discussion/O14Y0G2ENmc
+# todo: remove at xnat 1.6.5
 cd /home/tomcat7
 if [ -f /vagrant/xnat-maven.zip ]; then
     sudo cp /vagrant/xnat-maven.zip .
@@ -51,6 +59,7 @@ fi
 sudo apt-get install -y unzip
 sudo chown tomcat7:tomcat7 /home/tomcat7/xnat-maven.zip
 sudo su tomcat7 -c "unzip xnat-maven.zip"
+sudo su tomcat7 -c "find ~/.maven -exec touch {} \;"
 
 # download xnat
 cd /opt
@@ -62,6 +71,7 @@ fi
 sudo tar -zxvf ${XNAT}.tar.gz
 sudo cp /vagrant/build.properties /opt/${XNAT}
 sudo cp /vagrant/services.properties /opt/${XNAT}/plugin-resources/conf/services.properties
+sudo cp /vagrant/project.properties /opt/${XNAT}
 
 # database settings
 sudo -u postgres createuser -U postgres -S -D -R xnat01
@@ -80,6 +90,8 @@ sudo chmod -R 777 /opt/${XNAT}
 cd /opt/${XNAT}
 sudo su tomcat7 -c "echo 'export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64' >> /home/tomcat7/.bashrc"
 sudo su tomcat7 -c "echo 'export PATH=\${PATH}:/opt/${XNAT}/bin' >> /home/tomcat7/.bashrc"
+# note next line more maven hyginx, see above
+sudo su tomcat7 -c "cp -R ~/.maven/repository/javax.persistence /opt/${XNAT}/plugin-resources/repository/."
 sudo su tomcat7 -c "source ~/.bashrc && bin/setup.sh -Ddeploy=true"
 cd deployments/xnat
 sudo -u xnat01 psql -d xnat -f sql/xnat.sql -U xnat01

@@ -1,8 +1,8 @@
-dn: ou=People,dc=nodomain
+dn: ou=People,dc=test,dc=net
 objectClass: organizationalUnit
 ou: People
 
-dn: uid=john,ou=People,dc=nodomain
+dn: uid=john,ou=People,dc=test,dc=net
 objectClass: inetOrgPerson
 uid: john
 sn: Doe

@@ -22,7 +22,7 @@ sudo apt-get -y install tomcat7
 # setup keys
 sudo apt-get -y install gnutls-bin ssl-cert
 sudo sh -c "certtool --generate-privkey > /etc/ssl/private/cakey.pem"
-echo -e 'cn = Dementias Platform UK\nca\ncert_signing_key' | sudo tee /etc/ssl/ca.info
+echo -e 'cn = Test Organisation\nca\ncert_signing_key' | sudo tee /etc/ssl/ca.info
 sudo certtool --generate-self-signed --load-privkey /etc/ssl/private/cakey.pem --template /etc/ssl/ca.info --outfile /etc/ssl/certs/cacert.pem
 sudo certtool --generate-privkey --bits 1024 --outfile /etc/ssl/private/test_slapd_key.pem
 echo -e 'organization = Test Organisation\ncn = xnat.test.net\ntls_www_server\nencryption_key\nsigning_key\nexpiration_days = 7' | sudo tee /etc/ssl/test.info

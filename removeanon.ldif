@@ -1,4 +1,5 @@
-# remove anonymous searching by enforcing authentication
+# remove anonymous searching by enforcing encrypted authentication
+# http://serverfault.com/questions/459718/configure-openldap-with-tls-required
 
 dn: olcDatabase={-1}frontend,cn=config
 add: olcRequires
@@ -8,3 +9,18 @@ dn: olcDatabase={1}hdb,cn=config
 changetype:  modify
 add: olcRequires
 olcRequires: authc
+-
+add: olcSecurity
+olcSecurity: tls=1
+
+# Add indexes to the frontend db.
+dn: olcDatabase={1}hdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryCSN eq
+-
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+-
+add: olcDbIndex
+olcDbIndex: uid eq

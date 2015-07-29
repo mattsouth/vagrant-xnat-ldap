@@ -1,6 +1,7 @@
 #!/bin/bash
 echo -e '192.168.50.50\txnat.test.net' | sudo tee --append /etc/hosts
 XNAT=xnat-1.6.4
+JAVA_PATH=/usr/lib/jvm/java-7-openjdk-amd64
 
 # create tomcat7 user
 sudo useradd -g users -d /home/tomcat7 -s /bin/bash tomcat7
@@ -27,6 +28,8 @@ sudo certtool --generate-self-signed --load-privkey /etc/ssl/private/cakey.pem -
 sudo certtool --generate-privkey --bits 1024 --outfile /etc/ssl/private/test_slapd_key.pem
 echo -e 'organization = Test Organisation\ncn = xnat.test.net\ntls_www_server\nencryption_key\nsigning_key\nexpiration_days = 7' | sudo tee /etc/ssl/test.info
 sudo certtool --generate-certificate --load-privkey /etc/ssl/private/test_slapd_key.pem --load-ca-certificate /etc/ssl/certs/cacert.pem --load-ca-privkey /etc/ssl/private/cakey.pem --template /etc/ssl/test.info --outfile /etc/ssl/certs/test_slapd_cert.pem
+# tell java about our new certs
+sudo keytool -importcert -noprompt -storepass changeit -alias testRootCert -file /etc/ssl/certs/cacert.pem -keystore /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/security/cacerts
 
 # install ldap
 sudo debconf-set-selections /vagrant/dpkg.txt
@@ -42,7 +45,7 @@ ldapadd -c -x -H ldap://localhost:389 -D "cn=admin,dc=test,dc=net" -w adminpassw
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
 # configure tls encryption
 sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f /vagrant/certinfo.ldif
-sudo sed -i -e 's/ldap:\/\/\//ldap:\/\/xnat.test.net/g' /etc/default/slapd
+sudo sed -i -e 's/ldap:\/\/\//ldap:\/\/xnat.test.net ldaps:\/\/xnat.test.net/g' /etc/default/slapd
 sudo service slapd restart
 # remove anonymous access
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/removeanon.ldif
@@ -92,6 +95,7 @@ sudo su tomcat7 -c "echo 'export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64' >>
 sudo su tomcat7 -c "echo 'export PATH=\${PATH}:/opt/${XNAT}/bin' >> /home/tomcat7/.bashrc"
 # note next line more maven hyginx, see above
 sudo su tomcat7 -c "cp -R ~/.maven/repository/javax.persistence /opt/${XNAT}/plugin-resources/repository/."
+# all setup, now build
 sudo su tomcat7 -c "source ~/.bashrc && bin/setup.sh -Ddeploy=true"
 cd deployments/xnat
 sudo -u xnat01 psql -d xnat -f sql/xnat.sql -U xnat01

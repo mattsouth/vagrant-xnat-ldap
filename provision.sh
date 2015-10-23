@@ -39,10 +39,16 @@ sudo chgrp ssl-cert /etc/ssl/private/test_slapd_key.pem
 sudo chmod g+r /etc/ssl/private/test_slapd_key.pem
 sudo chmod o-r /etc/ssl/private/test_slapd_key.pem
 
-# load default ldap user
-ldapadd -c -x -H ldap://localhost:389 -D "cn=admin,dc=test,dc=net" -w adminpassword -f /vagrant/users.ldif
 # boost the ldap logging level
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
+# see https://technicalnotes.wordpress.com/2014/04/19/openldap-setup-with-memberof-overlay/
+# add memberof overlay
+sudo ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/memberof.ldif
+# add referential integrity so that, for instance when you remove a user, associated members are removed too
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/refint.ldif
+sudo ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/refint_config.ldif
+# load default ldap users and groups
+ldapadd -c -x -H ldap://localhost:389 -D "cn=admin,dc=test,dc=net" -w adminpassword -f /vagrant/users.ldif
 # configure tls encryption
 sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f /vagrant/certinfo.ldif
 sudo sed -i -e 's/ldap:\/\/\//ldap:\/\/xnat.test.net ldaps:\/\/xnat.test.net/g' /etc/default/slapd

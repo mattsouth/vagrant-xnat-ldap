@@ -5,8 +5,31 @@ ou: People
 dn: uid=john,ou=People,dc=test,dc=net
 objectClass: inetOrgPerson
 uid: john
-sn: Doe
+sn: Smith
 givenName: John
-cn: John Doe
-displayName: Doe, John
+cn: John Smith
+displayName: Smith, John
 userPassword: johnldap
+
+dn: uid=jane,ou=People,dc=test,dc=net
+objectClass: inetOrgPerson
+uid: jane
+sn: Doe
+givenName: Jane
+cn: Jane Doe
+displayName: Doe, Jane
+userPassword: janeldap
+
+dn: ou=Nodes,dc=test,dc=net
+objectClass: organizationalUnit
+ou: Nodes
+
+dn: cn=oxford,ou=Nodes,dc=test,dc=net
+objectclass: groupOfNames
+cn: oxford
+member: uid=john,ou=People,dc=test,dc=net
+
+dn: cn=dpuk,ou=Nodes,dc=test,dc=net
+objectclass: groupOfNames
+cn: dpuk
+member: uid=jane,ou=People,dc=test,dc=net

@@ -28,3 +28,19 @@ dn: cn=registered,ou=groups,dc=test,dc=net
 objectclass: groupOfNames
 cn: oxford
 member: mail=john@test.com,ou=people,dc=test,dc=net
+
+dn: ou=nodes,dc=test,dc=net
+objectClass: organizationalUnit
+ou: nodes
+
+dn: uid=hub,ou=nodes,dc=test,dc=net
+objectClass: account
+objectClass: simpleSecurityObject
+uid: hub
+userPassword: hubpassword
+
+dn: uid=oxford,ou=nodes,dc=test,dc=net
+objectClass: account
+objectClass: simpleSecurityObject
+uid: oxford
+userPassword: nodepassword

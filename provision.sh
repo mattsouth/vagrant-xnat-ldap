@@ -44,7 +44,8 @@ sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/logging.ldif
 # see https://technicalnotes.wordpress.com/2014/04/19/openldap-setup-with-memberof-overlay/
 # add memberof overlay
 sudo ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/memberof.ldif
-# add referential integrity so that, for instance when you remove a user, associated members are removed too
+# add referential integrity so that, for instance when you remove a user, associated memberships are removed too
+# TODO: remove / consolidate these two lines
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/refint.ldif
 sudo ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/refint_config.ldif
 # load default ldap users and groups

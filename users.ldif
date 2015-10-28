@@ -1,35 +1,30 @@
-dn: ou=People,dc=test,dc=net
+dn: ou=people,dc=test,dc=net
 objectClass: organizationalUnit
-ou: People
+ou: people
 
-dn: uid=john,ou=People,dc=test,dc=net
+dn: mail=john@test.com,ou=people,dc=test,dc=net
 objectClass: inetOrgPerson
-uid: john
+mail: john@test.com
 sn: Smith
 givenName: John
 cn: John Smith
 displayName: Smith, John
 userPassword: johnldap
 
-dn: uid=jane,ou=People,dc=test,dc=net
+dn: mail=jane@test.com,ou=People,dc=test,dc=net
 objectClass: inetOrgPerson
-uid: jane
+mail: jane@test.com
 sn: Doe
 givenName: Jane
 cn: Jane Doe
 displayName: Doe, Jane
 userPassword: janeldap
 
-dn: ou=Nodes,dc=test,dc=net
+dn: ou=groups,dc=test,dc=net
 objectClass: organizationalUnit
-ou: Nodes
+ou: nodes
 
-dn: cn=oxford,ou=Nodes,dc=test,dc=net
+dn: cn=registered,ou=groups,dc=test,dc=net
 objectclass: groupOfNames
 cn: oxford
-member: uid=john,ou=People,dc=test,dc=net
-
-dn: cn=dpuk,ou=Nodes,dc=test,dc=net
-objectclass: groupOfNames
-cn: dpuk
-member: uid=jane,ou=People,dc=test,dc=net
+member: mail=john@test.com,ou=people,dc=test,dc=net

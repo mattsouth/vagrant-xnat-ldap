@@ -54,8 +54,10 @@ ldapadd -c -x -H ldap://localhost:389 -D "cn=admin,dc=test,dc=net" -w adminpassw
 sudo ldapmodify -Y EXTERNAL -H ldapi:/// -f /vagrant/certinfo.ldif
 sudo sed -i -e 's/ldap:\/\/\//ldap:\/\/xnat.test.net ldaps:\/\/xnat.test.net/g' /etc/default/slapd
 sudo service slapd restart
+# update ACLs so that nodes can edit people
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/node-account.ldif
 # remove anonymous access
-#sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/removeanon.ldif
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/removeanon.ldif
 
 # extract prophylactic .maven repository
 # see https://groups.google.com/forum/#!topic/xnat_discussion/O14Y0G2ENmc

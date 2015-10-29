@@ -22,11 +22,10 @@ userPassword: janeldap
 
 dn: ou=groups,dc=test,dc=net
 objectClass: organizationalUnit
-ou: nodes
+ou: groups
 
 dn: cn=registered,ou=groups,dc=test,dc=net
 objectclass: groupOfNames
-cn: oxford
 member: mail=john@test.com,ou=people,dc=test,dc=net
 
 dn: ou=nodes,dc=test,dc=net

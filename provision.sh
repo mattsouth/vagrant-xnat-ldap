@@ -16,9 +16,7 @@ sudo useradd -g users xnat01
 # install dependencies
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get -y install postgresql
-sudo apt-get -y install openjdk-7-jdk
-sudo apt-get -y install tomcat7
+sudo apt-get -y install postgresql openjdk-7-jdk tomcat7
 
 # setup keys
 sudo apt-get -y install gnutls-bin ssl-cert
@@ -72,13 +70,18 @@ sudo cp /vagrant/build.properties /opt/${XNAT}
 sudo cp /vagrant/services.properties /opt/${XNAT}/plugin-resources/conf/services.properties
 sudo cp /vagrant/project.properties /opt/${XNAT}
 
+# add dpuk module
+sudo mkdir -p /opt/build/modules
+sudo cp /vagrant/dpuk-datatypes-1.0.zip /opt/build/modules/.
+sudo chown -R tomcat7:tomcat7 /opt/build/modules
+
 # database settings
 sudo -u postgres createuser -U postgres -S -D -R xnat01
 sudo -u postgres psql -U postgres -c "ALTER USER xnat01 WITH PASSWORD 'xnat'"
 sudo -u postgres createdb -U postgres -O xnat01 xnat
 
 # create data dir
-sudo mkdir /opt/data
+sudo mkdir -p /opt/data/build
 sudo chown -R tomcat7:tomcat7 /opt/data
 
 # xnat installation

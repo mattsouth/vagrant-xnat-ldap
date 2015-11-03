@@ -1,6 +1,6 @@
 #!/bin/bash
 echo -e '192.168.50.50\txnat.test.net' | sudo tee --append /etc/hosts
-XNAT=xnat-1.6.4
+XNAT=xnat-1.6.5
 JAVA_PATH=/usr/lib/jvm/java-7-openjdk-amd64
 
 # create tomcat7 user
@@ -59,28 +59,15 @@ sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/node-account.ldif
 # remove anonymous access
 sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /vagrant/removeanon.ldif
 
-# extract prophylactic .maven repository
-# see https://groups.google.com/forum/#!topic/xnat_discussion/O14Y0G2ENmc
-# todo: remove at xnat 1.6.5
-cd /home/tomcat7
-if [ -f /vagrant/xnat-maven.zip ]; then
-    sudo cp /vagrant/xnat-maven.zip .
-else
-    sudo curl -O ftp://ftp.nrg.wustl.edu/pub/xnat/xnat-maven.zip
-fi
-sudo apt-get install -y unzip
-sudo chown tomcat7:tomcat7 /home/tomcat7/xnat-maven.zip
-sudo su tomcat7 -c "unzip xnat-maven.zip"
-sudo su tomcat7 -c "find ~/.maven -exec touch {} \;"
-
 # download xnat
 cd /opt
-if [ -f /vagrant/xnat-1.6.4.tar.gz ]; then
-    sudo cp /vagrant/xnat-1.6.4.tar.gz .
+if [ -f /vagrant/${XNAT}.tar.gz ]; then
+    sudo cp /vagrant/${XNAT}.tar.gz .
 else
     sudo curl -O ftp://ftp.nrg.wustl.edu/pub/xnat/${XNAT}.tar.gz
 fi
 sudo tar -zxvf ${XNAT}.tar.gz
+sudo mv xnat ${XNAT}
 sudo cp /vagrant/build.properties /opt/${XNAT}
 sudo cp /vagrant/services.properties /opt/${XNAT}/plugin-resources/conf/services.properties
 sudo cp /vagrant/project.properties /opt/${XNAT}
@@ -96,14 +83,11 @@ sudo chown -R tomcat7:tomcat7 /opt/data
 
 # xnat installation
 sudo service tomcat7 stop
-sudo chown -R tomcat7:tomcat7 /vagrant/build.properties
 sudo chown -R tomcat7:tomcat7 /opt/${XNAT}
 sudo chmod -R 777 /opt/${XNAT}
 cd /opt/${XNAT}
 sudo su tomcat7 -c "echo 'export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64' >> /home/tomcat7/.bashrc"
 sudo su tomcat7 -c "echo 'export PATH=\${PATH}:/opt/${XNAT}/bin' >> /home/tomcat7/.bashrc"
-# note next line more maven hyginx, see above
-sudo su tomcat7 -c "cp -R ~/.maven/repository/javax.persistence /opt/${XNAT}/plugin-resources/repository/."
 # all setup, now build
 sudo su tomcat7 -c "source ~/.bashrc && bin/setup.sh -Ddeploy=true"
 cd deployments/xnat

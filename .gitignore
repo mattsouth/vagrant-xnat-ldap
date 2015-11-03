@@ -1,3 +1,2 @@
 .vagrant
-xnat-1.6.4.tar.gz
-xnat-maven.zip
+xnat-*.tar.gz
